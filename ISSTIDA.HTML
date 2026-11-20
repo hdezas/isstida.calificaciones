@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CUGDL · Consulta de calificaciones</title>
+  <!-- Bootstrap 5.3 (CSS) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome para iconos -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    :root {
+      --azul-oscuro: #003B65;
+      --azul-medio: #07558C;
+      --azul-claro: #D0DFEC;
+      --verde-inst: #80AD39;
+      --blanco: #FFFFFF;
+      --gris-claro: #F0F0F0;
+      --texto: #252525;
+    }
+
+    body {
+      font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: var(--gris-claro);
+      color: var(--texto);
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ---------- BARRA SUPERIOR ---------- */
+    .top-bar {
+      background-color: var(--azul-oscuro);
+      padding: 0.5rem 0;
+      border-bottom: 4px solid var(--verde-inst);
+    }
+    .top-bar .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    .escudo-placeholder { display: flex; align-items: center; gap: 12px; }
+    .escudo-icon {
+      width: 50px; height: 50px;
+      background-color: var(--blanco);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--azul-oscuro);
+      font-size: 1.8rem; font-weight: bold;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .escudo-texto { color: var(--blanco); line-height: 1.2; }
+    .escudo-texto .universidad { font-size: 1.1rem; font-weight: 700; letter-spacing: 1px; }
+    .escudo-texto .centro { font-size: 0.8rem; font-weight: 400; opacity: 0.9; letter-spacing: 0.5px; }
+    .cugdl-badge {
+      background-color: var(--verde-inst);
+      color: var(--blanco);
+      font-weight: 600;
+      padding: 6px 18px;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      letter-spacing: 1px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .cugdl-badge i { font-size: 1rem; }
+
+    /* ---------- NAVEGACIÓN ---------- */
+    .nav-institucional {
+      background-color: var(--azul-medio);
+      padding: 0;
+      border-bottom: 2px solid var(--azul-claro);
+    }
+    .nav-institucional .nav-link {
+      color: var(--blanco) !important;
+      font-weight: 500;
+      padding: 1rem 1.2rem;
+      border-radius: 0;
+      transition: background 0.2s;
+      font-size: 0.95rem;
+      letter-spacing: 0.3px;
+    }
+    .nav-institucional .nav-link:hover,
+    .nav-institucional .nav-link.active {
+      background-color: var(--azul-oscuro);
+      color: var(--blanco) !important;
+      border-bottom: 3px solid var(--verde-inst);
+    }
+
+    /* ---------- TARJETA ESTUDIANTE ---------- */
+    .card-estudiante {
+      background-color: var(--blanco);
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border-left: 6px solid var(--azul-medio);
+      margin-bottom: 2rem;
+    }
+    .card-estudiante .card-header {
+      background-color: var(--azul-claro);
+      color: var(--azul-oscuro);
+      font-weight: 700;
+      font-size: 1.1rem;
+      border-radius: 12px 12px 0 0;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid #b8c9db;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .card-estudiante .card-header i { color: var(--azul-medio); }
+    .dato-estudiante { margin-bottom: 0.6rem; font-size: 0.95rem; display: flex; flex-wrap: wrap; }
+    .dato-estudiante .etiqueta { font-weight: 600; color: var(--azul-oscuro); min-width: 170px; }
+    .dato-estudiante .valor { color: var(--texto); }
+    .estatus-activo {
+      background-color: var(--verde-inst);
+      color: var(--blanco);
+      padding: 2px 12px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      display: inline-block;
+    }
+
+    /* ---------- TABLA CALIFICACIONES ---------- */
+    .tabla-calificaciones {
+      background-color: var(--blanco);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .tabla-calificaciones thead {
+      background-color: var(--azul-oscuro);
+      color: var(--blanco);
+    }
+    .tabla-calificaciones th {
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: none;
+      padding: 0.9rem 0.8rem;
+    }
+    .tabla-calificaciones td {
+      vertical-align: middle;
+      font-size: 0.95rem;
+      padding: 0.8rem;
+      border-color: #e0e7ef;
+    }
+    .tabla-calificaciones tbody tr:hover { background-color: #f1f7fd; }
+    .badge-aprobada {
+      background-color: var(--verde-inst);
+      color: var(--blanco);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 500;
+      font-size: 0.8rem;
+      display: inline-block;
+    }
+    .badge-reprobada {
+      background-color: #c0392b;
+      color: var(--blanco);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 500;
+      font-size: 0.8rem;
+      display: inline-block;
+    }
+    .badge-encurso {
+      background-color: #e6a700;
+      color: var(--texto);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 500;
+      font-size: 0.8rem;
+      display: inline-block;
+    }
+
+    /* ---------- INPUT DE CALIFICACIÓN ---------- */
+    .input-calif {
+      width: 80px;
+      text-align: center;
+      border: 1px solid #b8c9db;
+      border-radius: 6px;
+      padding: 4px;
+      font-weight: 600;
+      color: var(--azul-oscuro);
+    }
+    .input-calif:focus {
+      outline: 2px solid var(--azul-medio);
+      border-color: var(--azul-medio);
+    }
+
+    /* ---------- BOTÓN GUARDAR FILA ---------- */
+    .btn-guardar-fila {
+      background-color: var(--azul-medio);
+      color: var(--blanco);
+      border: none;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      transition: background 0.2s;
+    }
+    .btn-guardar-fila:hover { background-color: var(--azul-oscuro); }
+    .btn-guardar-fila.guardado {
+      background-color: var(--verde-inst);
+    }
+
+    /* ---------- RESUMEN ACADÉMICO ---------- */
+    .resumen-card {
+      background-color: var(--blanco);
+      border-radius: 12px;
+      padding: 1.2rem 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      border-top: 5px solid var(--verde-inst);
+      height: 100%;
+    }
+    .resumen-card .titulo {
+      font-weight: 700;
+      color: var(--azul-oscuro);
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid var(--azul-claro);
+      padding-bottom: 0.5rem;
+    }
+    .promedio-grande {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--azul-medio);
+      line-height: 1;
+    }
+
+    /* ---------- BOTONES ---------- */
+    .btn-institucional {
+      background-color: var(--azul-medio);
+      color: var(--blanco);
+      border: none;
+      padding: 0.6rem 1.5rem;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+      letter-spacing: 0.5px;
+    }
+    .btn-institucional:hover { background-color: var(--azul-oscuro); color: var(--blanco); }
+    .btn-verde {
+      background-color: var(--verde-inst);
+      color: var(--blanco);
+      border: none;
+      padding: 0.6rem 1.5rem;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+    .btn-verde:hover { background-color: #6a9329; color: var(--blanco); }
+    .btn-outline-institucional {
+      border: 2px solid var(--azul-medio);
+      color: var(--azul-medio);
+      background: transparent;
+      padding: 0.5rem 1.4rem;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    .btn-outline-institucional:hover { background-color: var(--azul-medio); color: var(--blanco); }
+
+    /* ---------- UTILIDADES ---------- */
+    .seccion-contenido { display: none; }
+    .seccion-contenido.activa { display: block; }
+    .mensaje-informativo {
+      background-color: var(--azul-claro);
+      border-left: 5px solid var(--azul-medio);
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      color: var(--azul-oscuro);
+      font-weight: 500;
+      margin-bottom: 1.5rem;
+    }
+
+    /* ---------- NOTIFICACIÓN TOAST ---------- */
+    .toast-guardado {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: var(--verde-inst);
+      color: var(--blanco);
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.3s, transform 0.3s;
+      z-index: 9999;
+      pointer-events: none;
+    }
+    .toast-guardado.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    footer {
+      background-color: var(--azul-oscuro);
+      color: var(--blanco);
+      padding: 1.2rem 0;
+      margin-top: 3rem;
+      font-size: 0.85rem;
+      border-top: 5px solid var(--verde-inst);
+    }
+
+    @media (max-width: 768px) {
+      .escudo-texto .universidad { font-size: 0.9rem; }
+      .cugdl-badge { font-size: 0.75rem; padding: 4px 12px; }
+      .dato-estudiante .etiqueta { min-width: 130px; }
+      .nav-institucional .nav-link { padding: 0.7rem 0.9rem; font-size: 0.85rem; }
+      .promedio-grande { font-size: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========== ENCABEZADO INSTITUCIONAL ========== -->
+  <header class="top-bar">
+    <div class="container">
+      <div class="escudo-placeholder">
+        <div class="escudo-icon">U</div>
+        <div class="escudo-texto">
+          <div class="universidad">UNIVERSIDAD DE GUADALAJARA</div>
+          <div class="centro">CENTRO UNIVERSITARIO DE GUADALAJARA</div>
+        </div>
+      </div>
+      <div class="cugdl-badge">
+        <i class="fas fa-graduation-cap"></i> CUGDL
+      </div>
+    </div>
+  </header>
+
+  <!-- ========== MENÚ DE NAVEGACIÓN ========== -->
+  <nav class="nav-institucional">
+    <div class="container">
+      <ul class="nav justify-content-center">
+        <li class="nav-item"><a class="nav-link active" href="#" data-seccion="inicio">Inicio</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-seccion="datos">Datos personales</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-seccion="trayectoria">Trayectoria académica</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-seccion="calificaciones">Calificaciones</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-seccion="historial">Historial académico</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" id="cerrarSesion">Cerrar sesión</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- ========== CONTENIDO PRINCIPAL ========== -->
+  <main class="container py-4">
+
+    <div id="mensajeBienvenida" class="mensaje-informativo">
+      <i class="fas fa-info-circle me-2"></i> Bienvenido al portal de consulta de calificaciones. Puede <strong>editar las calificaciones</strong> y guardar los cambios.
+    </div>
+
+    <!-- ========== SECCIÓN: INICIO ========== -->
+    <div id="seccion-inicio" class="seccion-contenido activa">
+      <!-- Tarjeta del estudiante -->
+      <div class="card card-estudiante">
+        <div class="card-header">
+          <i class="fas fa-user-circle"></i> Información del estudiante
+        </div>
+        <div class="card-body p-4">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="dato-estudiante"><span class="etiqueta">Código de estudiante:</span><span class="valor">218547632</span></div>
+              <div class="dato-estudiante"><span class="etiqueta">Nombre completo:</span><span class="valor">ITZEL FERNANDA TORRES BARAJAS</span></div>
+              <div class="dato-estudiante"><span class="etiqueta">Carrera:</span><span class="valor">Licenciatura en Creatividad Digital</span></div>
+            </div>
+            <div class="col-md-6">
+              <div class="dato-estudiante"><span class="etiqueta">Centro universitario:</span><span class="valor">CUGDL</span></div>
+              <div class="dato-estudiante"><span class="etiqueta">Ciclo escolar actual:</span><span class="valor">2026B</span></div>
+              <div class="dato-estudiante"><span class="etiqueta">Estatus:</span><span class="valor"><span class="estatus-activo">ACTIVO</span></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Selector de ciclo escolar y botones -->
+      <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
+        <div class="d-flex align-items-center gap-3">
+          <label for="selectorCiclo" class="fw-bold" style="color: var(--azul-oscuro);">Ciclo escolar:</label>
+          <select id="selectorCiclo" class="form-select" style="width: auto; min-width: 180px;">
+            <option value="2024A">2026B</option>
+            <option value="2024A">2026A</option>
+            <option value="2025A">2025B</option>
+            <option value="2025A">2025A</option>
+            <option value="2024B">2024B</option>
+            
+          </select>
+        </div>
+        <div class="d-flex gap-2">
+          <button id="btnImprimir" class="btn-institucional"><i class="fas fa-print me-2"></i>Imprimir consulta</button>
+          <button id="btnRegresarInicio" class="btn-outline-institucional"><i class="fas fa-home me-2"></i>Regresar al inicio</button>
+        </div>
+      </div>
+
+      <!-- Tabla de calificaciones -->
+      <div class="table-responsive tabla-calificaciones">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Clave</th>
+              <th>Asignatura</th>
+              <th>Créditos</th>
+              <th style="min-width: 140px;">Calificación</th>
+              <th>Estatus</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody id="tablaCalificacionesBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Resumen académico -->
+      <div class="row mt-4 g-3">
+        <div class="col-md-3 col-6"><div class="resumen-card text-center"><div class="titulo">Promedio general</div><div class="promedio-grande" id="promedioGeneral">0.0</div></div></div>
+        <div class="col-md-3 col-6"><div class="resumen-card text-center"><div class="titulo">Materias cursadas</div><div class="promedio-grande" id="totalMaterias">0</div></div></div>
+        <div class="col-md-3 col-6"><div class="resumen-card text-center"><div class="titulo">Materias aprobadas</div><div class="promedio-grande" id="materiasAprobadas">0</div></div></div>
+        <div class="col-md-3 col-6"><div class="resumen-card text-center"><div class="titulo">Materias pendientes</div><div class="promedio-grande" id="materiasPendientes">0</div></div></div>
+      </div>
+    </div>
+
+    <!-- ========== SECCIÓN: DATOS PERSONALES ========== -->
+    <div id="seccion-datos" class="seccion-contenido">
+      <div class="card card-estudiante">
+        <div class="card-header"><i class="fas fa-id-card"></i> Datos personales</div>
+        <div class="card-body p-4">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="dato-estudiante"><span class="etiqueta">Nombre:</span><span class="valor">ITZEL FERNANDA TORRES BARAJAS</span></div>
+              <div class="dato-estudiante"><span class="etiqueta">Código:</span><span class="valor">218547632</span></div>
+              <div class="dato-estudiante"><span class="etiqueta">Correo institucional:</span><span class="valor">itze.barajas@alumnos.udg.mx</span></div>
+            </div>
+            <div class="col-md-6">
+              <div class="dato-estudiante"><span class="etiqueta">Teléfono:</span><span class="valor">33 1234 5678</span></div>
+              <div class="dato-estudiante"><span class="etiqueta">Dirección:</span><span class="valor">Av. Juárez 123, Guadalajara, Jal.</span></div>
+              <div class="dato-estudiante"><span class="etiqueta">Fecha de nacimiento:</span><span class="valor">15/03/2003</span></div>
+            </div>
+          </div>
+          <div class="mensaje-informativo mt-3">
+            <i class="fas fa-lock me-2"></i> Esta información es ficticia y solo con fines de demostración.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== SECCIÓN: TRAYECTORIA ACADÉMICA ========== -->
+    <div id="seccion-trayectoria" class="seccion-contenido">
+      <div class="card card-estudiante">
+        <div class="card-header"><i class="fas fa-chart-line"></i> Trayectoria académica</div>
+        <div class="card-body p-4">
+          <p class="fw-bold" style="color: var(--azul-oscuro);">Avance curricular:</p>
+          <div class="progress mb-3" style="height: 25px;">
+            <div class="progress-bar" role="progressbar" style="width: 65%; background-color: var(--verde-inst);" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100">65%</div>
+          </div>
+          <div class="dato-estudiante"><span class="etiqueta">Créditos acumulados:</span><span class="valor">142 / 220</span></div>
+          <div class="dato-estudiante"><span class="etiqueta">Materias aprobadas:</span><span class="valor">18</span></div>
+          <div class="dato-estudiante"><span class="etiqueta">Materias en curso:</span><span class="valor">6</span></div>
+          <div class="dato-estudiante"><span class="etiqueta">Promedio histórico:</span><span class="valor">89.5</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== SECCIÓN: CALIFICACIONES ========== -->
+    <div id="seccion-calificaciones" class="seccion-contenido">
+      <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
+        <h4 style="color: var(--azul-oscuro); font-weight: 700;"><i class="fas fa-file-alt me-2"></i>Consulta de calificaciones</h4>
+        <div class="d-flex align-items-center gap-3">
+          <label for="selectorCicloCalif" class="fw-bold" style="color: var(--azul-oscuro);">Ciclo:</label>
+          <select id="selectorCicloCalif" class="form-select" style="width: auto; min-width: 150px;">
+            <option value="2024A">2026B</option>
+            <option value="2024A">2026A</option>
+            <option value="2025A">2025B</option>
+            <option value="2025A">2025A</option>
+            <option value="2024B">2024B</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-responsive tabla-calificaciones">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr><th>Clave</th><th>Asignatura</th><th>Créditos</th><th style="min-width: 140px;">Calificación</th><th>Estatus</th><th>Acción</th></tr>
+          </thead>
+          <tbody id="tablaCalificacionesBody2"></tbody>
+        </table>
+      </div>
+      <div class="row mt-4 g-3">
+        <div class="col-md-3 col-6"><div class="resumen-card text-center"><div class="titulo">Promedio general</div><div class="promedio-grande" id="promedioGeneral2">0.0</div></div></div>
+        <div class="col-md-3 col-6"><div class="resumen-card text-center"><div class="titulo">Materias cursadas</div><div class="promedio-grande" id="totalMaterias2">0</div></div></div>
+        <div class="col-md-3 col-6"><div class="resumen-card text-center"><div class="titulo">Materias aprobadas</div><div class="promedio-grande" id="materiasAprobadas2">0</div></div></div>
+        <div class="col-md-3 col-6"><div class="resumen-card text-center"><div class="titulo">Materias pendientes</div><div class="promedio-grande" id="materiasPendientes2">0</div></div></div>
+      </div>
+    </div>
+
+    <!-- ========== SECCIÓN: HISTORIAL ACADÉMICO ========== -->
+    <div id="seccion-historial" class="seccion-contenido">
+      <div class="card card-estudiante">
+        <div class="card-header"><i class="fas fa-history"></i> Historial académico</div>
+        <div class="card-body p-4">
+          <p class="fw-bold" style="color: var(--azul-oscuro);">Resumen de ciclos anteriores:</p>
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+              <thead style="background-color: var(--azul-claro);">
+                <tr><th>Ciclo</th><th>Materias cursadas</th><th>Promedio</th><th>Estatus</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>2024B</td><td>6</td><td>91.2</td><td><span class="badge-aprobada">Aprobado</span></td></tr>
+                <tr><td>2024A</td><td>6</td><td>88.7</td><td><span class="badge-aprobada">Aprobado</span></td></tr>
+                <tr><td>2023B</td><td>5</td><td>90.1</td><td><span class="badge-aprobada">Aprobado</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="mensaje-informativo mt-3">
+            <i class="fas fa-info-circle me-2"></i> Historial simulado. No corresponde a registros reales.
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ========== TOAST DE GUARDADO ========== -->
+  <div id="toastGuardado" class="toast-guardado">
+    <i class="fas fa-check-circle me-2"></i> Cambios guardados (simulación)
+  </div>
+
+  <!-- ========== PIE DE PÁGINA ========== -->
+  <footer class="text-center">
+    <div class="container">
+      <p class="mb-0">Universidad de Guadalajara · Centro Universitario de Guadalajara · Sistema de consulta de calificaciones (simulado)</p>
+      <p class="mb-0" style="opacity: 0.7; font-size: 0.75rem;">Recreación audiovisual. Información ficticia.</p>
+    </div>
+  </footer>
+
+  <!-- ========== JAVASCRIPT ========== -->
+  <script>
+    (function() {
+      // ---------- DATOS FICTICIOS (MUTABLES) ----------
+      // Se almacenan en memoria; los cambios se conservan durante la sesión.
+      let datosCalificaciones = {
+        '2025A': [
+          { clave: 'CD101', materia: 'Taller de diseño digital', creditos: 8, calificacion: 95, estatus: 'Aprobada' },
+          { clave: 'CD102', materia: 'Animación y modelado 3D', creditos: 8, calificacion: 88, estatus: 'Aprobada' },
+          { clave: 'CD103', materia: 'Narrativa audiovisual', creditos: 6, calificacion: 92, estatus: 'Aprobada' },
+          { clave: 'CD104', materia: 'Programación creativa', creditos: 8, calificacion: 78, estatus: 'Aprobada' },
+          { clave: 'CD105', materia: 'Fotografía digital', creditos: 6, calificacion: 0, estatus: 'En curso' },
+          { clave: 'CD106', materia: 'Producción sonora', creditos: 6, calificacion: 0, estatus: 'En curso' }
+        ],
+        '2024B': [
+          { clave: 'CD201', materia: 'Diseño de interfaz', creditos: 8, calificacion: 91, estatus: 'Aprobada' },
+          { clave: 'CD202', materia: 'Guionismo interactivo', creditos: 6, calificacion: 85, estatus: 'Aprobada' },
+          { clave: 'CD203', materia: 'Edición de video', creditos: 8, calificacion: 89, estatus: 'Aprobada' },
+          { clave: 'CD204', materia: 'Fundamentos de arte digital', creditos: 6, calificacion: 94, estatus: 'Aprobada' },
+          { clave: 'CD205', materia: 'Taller de creatividad', creditos: 6, calificacion: 97, estatus: 'Aprobada' },
+          { clave: 'CD206', materia: 'Ética profesional', creditos: 4, calificacion: 70, estatus: 'Aprobada' }
+        ],
+        '2024A': [
+          { clave: 'CD301', materia: 'Introducción a la creatividad digital', creditos: 8, calificacion: 82, estatus: 'Aprobada' },
+          { clave: 'CD302', materia: 'Dibujo vectorial', creditos: 6, calificacion: 76, estatus: 'Aprobada' },
+          { clave: 'CD303', materia: 'Teoría del color', creditos: 4, calificacion: 91, estatus: 'Aprobada' },
+          { clave: 'CD304', materia: 'Historia del arte', creditos: 6, calificacion: 88, estatus: 'Aprobada' },
+          { clave: 'CD305', materia: 'Matemáticas aplicadas', creditos: 8, calificacion: 65, estatus: 'Reprobada' },
+          { clave: 'CD306', materia: 'Comunicación oral y escrita', creditos: 4, calificacion: 79, estatus: 'Aprobada' }
+        ]
+      };
+
+      // ---------- REFERENCIAS DOM ----------
+      const selectorCiclo = document.getElementById('selectorCiclo');
+      const selectorCicloCalif = document.getElementById('selectorCicloCalif');
+      const tablaBody = document.getElementById('tablaCalificacionesBody');
+      const tablaBody2 = document.getElementById('tablaCalificacionesBody2');
+      const promedioGeneral = document.getElementById('promedioGeneral');
+      const totalMaterias = document.getElementById('totalMaterias');
+      const materiasAprobadas = document.getElementById('materiasAprobadas');
+      const materiasPendientes = document.getElementById('materiasPendientes');
+      const promedioGeneral2 = document.getElementById('promedioGeneral2');
+      const totalMaterias2 = document.getElementById('totalMaterias2');
+      const materiasAprobadas2 = document.getElementById('materiasAprobadas2');
+      const materiasPendientes2 = document.getElementById('materiasPendientes2');
+      const toastGuardado = document.getElementById('toastGuardado');
+
+      // ---------- FUNCIÓN: DETERMINAR ESTATUS SEGÚN CALIFICACIÓN ----------
+      function determinarEstatus(calif, estatusActual) {
+        // Si está en curso, se respeta como "En curso" sin importar la calificación
+        if (estatusActual === 'En curso') return 'En curso';
+        // Si la calificación es 0 y no es en curso, se considera pendiente (En curso) o Reprobada?
+        // Regla: si la calificación es mayor o igual a 70 => Aprobada, si es menor => Reprobada.
+        if (calif === 0) return 'En curso'; // Sin calificación asignada
+        return calif >= 70 ? 'Aprobada' : 'Reprobada';
+      }
+
+      // ---------- FUNCIÓN: RENDERIZAR TABLA Y RESUMEN ----------
+      function renderizarCiclo(ciclo, destinoTabla, destinosResumen) {
+        const materias = datosCalificaciones[ciclo] || [];
+        // Llenar tabla con inputs editables
+        destinoTabla.innerHTML = materias.map((m, index) => {
+          let badgeClass = '';
+          if (m.estatus === 'Aprobada') badgeClass = 'badge-aprobada';
+          else if (m.estatus === 'Reprobada') badgeClass = 'badge-reprobada';
+          else badgeClass = 'badge-encurso';
+
+          // Input de calificación (solo si no es "En curso" o si se desea editar)
+          // Permitimos editar incluso "En curso" para que se pueda asignar calificación.
+          const califValue = (m.estatus === 'En curso' && m.calificacion === 0) ? '' : m.calificacion;
+
+          return `<tr data-ciclo="${ciclo}" data-index="${index}">
+            <td>${m.clave}</td>
+            <td>${m.materia}</td>
+            <td>${m.creditos}</td>
+            <td>
+              <input type="number" class="input-calif" min="0" max="100" 
+                     value="${califValue}" placeholder="—" 
+                     data-ciclo="${ciclo}" data-index="${index}">
+            </td>
+            <td><span class="${badgeClass}">${m.estatus}</span></td>
+            <td>
+              <button class="btn-guardar-fila" data-ciclo="${ciclo}" data-index="${index}">
+                <i class="fas fa-save"></i> Guardar
+              </button>
+            </td>
+          </tr>`;
+        }).join('');
+
+        // Calcular resumen
+        const total = materias.length;
+        const aprobadas = materias.filter(m => m.estatus === 'Aprobada').length;
+        const pendientes = materias.filter(m => m.estatus === 'En curso' || m.estatus === 'Reprobada').length;
+        const conCalif = materias.filter(m => m.estatus !== 'En curso' && m.calificacion > 0);
+        const suma = conCalif.reduce((acc, m) => acc + m.calificacion, 0);
+        const promedio = conCalif.length > 0 ? (suma / conCalif.length).toFixed(1) : '0.0';
+
+        if (destinosResumen === 'inicio') {
+          promedioGeneral.textContent = promedio;
+          totalMaterias.textContent = total;
+          materiasAprobadas.textContent = aprobadas;
+          materiasPendientes.textContent = pendientes;
+        } else if (destinosResumen === 'calificaciones') {
+          promedioGeneral2.textContent = promedio;
+          totalMaterias2.textContent = total;
+          materiasAprobadas2.textContent = aprobadas;
+          materiasPendientes2.textContent = pendientes;
+        }
+
+        // Asignar eventos a los botones "Guardar" de esta tabla
+        destinoTabla.querySelectorAll('.btn-guardar-fila').forEach(btn => {
+          btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const cicloBtn = this.dataset.ciclo;
+            const idx = parseInt(this.dataset.index);
+            const fila = this.closest('tr');
+            const input = fila.querySelector('.input-calif');
+            const nuevoValor = parseInt(input.value) || 0;
+
+            // Validar rango
+            if (nuevoValor < 0 || nuevoValor > 100) {
+              alert('La calificación debe estar entre 0 y 100.');
+              return;
+            }
+
+            // Actualizar dato en memoria
+            const materia = datosCalificaciones[cicloBtn][idx];
+            materia.calificacion = nuevoValor;
+            // Determinar nuevo estatus
+            materia.estatus = determinarEstatus(nuevoValor, materia.estatus);
+
+            // Actualizar badge en la fila
+            const badge = fila.querySelector('td:nth-child(5) span');
+            badge.className = '';
+            if (materia.estatus === 'Aprobada') badge.classList.add('badge-aprobada');
+            else if (materia.estatus === 'Reprobada') badge.classList.add('badge-reprobada');
+            else badge.classList.add('badge-encurso');
+            badge.textContent = materia.estatus;
+
+            // Actualizar resumen de la tabla correspondiente
+            if (destinosResumen === 'inicio') {
+              actualizarResumen('inicio');
+            } else {
+              actualizarResumen('calificaciones');
+            }
+
+            // Feedback visual en el botón
+            this.classList.add('guardado');
+            this.innerHTML = '<i class="fas fa-check"></i> Guardado';
+            const self = this;
+            setTimeout(() => {
+              self.classList.remove('guardado');
+              self.innerHTML = '<i class="fas fa-save"></i> Guardar';
+            }, 1500);
+
+            // Mostrar toast
+            mostrarToast();
+          });
+        });
+      }
+
+      // ---------- FUNCIÓN: ACTUALIZAR SOLO EL RESUMEN ----------
+      function actualizarResumen(destino) {
+        if (destino === 'inicio') {
+          const ciclo = selectorCiclo.value;
+          const materias = datosCalificaciones[ciclo] || [];
+          const total = materias.length;
+          const aprobadas = materias.filter(m => m.estatus === 'Aprobada').length;
+          const pendientes = materias.filter(m => m.estatus === 'En curso' || m.estatus === 'Reprobada').length;
+          const conCalif = materias.filter(m => m.estatus !== 'En curso' && m.calificacion > 0);
+          const suma = conCalif.reduce((acc, m) => acc + m.calificacion, 0);
+          const promedio = conCalif.length > 0 ? (suma / conCalif.length).toFixed(1) : '0.0';
+          promedioGeneral.textContent = promedio;
+          totalMaterias.textContent = total;
+          materiasAprobadas.textContent = aprobadas;
+          materiasPendientes.textContent = pendientes;
+        } else {
+          const ciclo = selectorCicloCalif.value;
+          const materias = datosCalificaciones[ciclo] || [];
+          const total = materias.length;
+          const aprobadas = materias.filter(m => m.estatus === 'Aprobada').length;
+          const pendientes = materias.filter(m => m.estatus === 'En curso' || m.estatus === 'Reprobada').length;
+          const conCalif = materias.filter(m => m.estatus !== 'En curso' && m.calificacion > 0);
+          const suma = conCalif.reduce((acc, m) => acc + m.calificacion, 0);
+          const promedio = conCalif.length > 0 ? (suma / conCalif.length).toFixed(1) : '0.0';
+          promedioGeneral2.textContent = promedio;
+          totalMaterias2.textContent = total;
+          materiasAprobadas2.textContent = aprobadas;
+          materiasPendientes2.textContent = pendientes;
+        }
+      }
+
+      // ---------- FUNCIÓN: MOSTRAR TOAST ----------
+      function mostrarToast() {
+        toastGuardado.classList.add('visible');
+        setTimeout(() => {
+          toastGuardado.classList.remove('visible');
+        }, 2200);
+      }
+
+      // ---------- ACTUALIZAR AMBAS TABLAS SEGÚN SELECTOR ----------
+      function actualizarTodo() {
+        const cicloInicio = selectorCiclo.value;
+        const cicloCalif = selectorCicloCalif.value;
+        renderizarCiclo(cicloInicio, tablaBody, 'inicio');
+        renderizarCiclo(cicloCalif, tablaBody2, 'calificaciones');
+      }
+
+      // ---------- EVENTOS DE SELECTORES ----------
+      selectorCiclo.addEventListener('change', function() {
+        selectorCicloCalif.value = this.value;
+        actualizarTodo();
+      });
+
+      selectorCicloCalif.addEventListener('change', function() {
+        selectorCiclo.value = this.value;
+        actualizarTodo();
+      });
+
+      // ---------- NAVEGACIÓN ENTRE SECCIONES ----------
+      const navLinks = document.querySelectorAll('.nav-institucional .nav-link');
+      const secciones = {
+        inicio: document.getElementById('seccion-inicio'),
+        datos: document.getElementById('seccion-datos'),
+        trayectoria: document.getElementById('seccion-trayectoria'),
+        calificaciones: document.getElementById('seccion-calificaciones'),
+        historial: document.getElementById('seccion-historial')
+      };
+      const mensajeBienvenida = document.getElementById('mensajeBienvenida');
+
+      navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          const seccion = this.dataset.seccion;
+          if (!seccion) return;
+
+          Object.values(secciones).forEach(sec => {
+            if (sec) sec.classList.remove('activa');
+          });
+          if (secciones[seccion]) secciones[seccion].classList.add('activa');
+
+          navLinks.forEach(l => l.classList.remove('active'));
+          this.classList.add('active');
+
+          if (seccion === 'inicio') {
+            mensajeBienvenida.style.display = 'block';
+          } else {
+            mensajeBienvenida.style.display = 'none';
+          }
+
+          if (seccion === 'calificaciones') {
+            renderizarCiclo(selectorCicloCalif.value, tablaBody2, 'calificaciones');
+          }
+          if (seccion === 'inicio') {
+            renderizarCiclo(selectorCiclo.value, tablaBody, 'inicio');
+          }
+        });
+      });
+
+      // ---------- CERRAR SESIÓN ----------
+      document.getElementById('cerrarSesion').addEventListener('click', function(e) {
+        e.preventDefault();
+        alert('Sesión cerrada. (Simulación para el cortometraje)');
+        document.querySelector('.nav-link[data-seccion="inicio"]').click();
+      });
+
+      // ---------- BOTÓN IMPRIMIR ----------
+      document.getElementById('btnImprimir').addEventListener('click', function() {
+        window.print();
+      });
+
+      // ---------- BOTÓN REGRESAR AL INICIO ----------
+      document.getElementById('btnRegresarInicio').addEventListener('click', function() {
+        document.querySelector('.nav-link[data-seccion="inicio"]').click();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+
+      // ---------- INICIALIZACIÓN ----------
+      selectorCicloCalif.value = selectorCiclo.value;
+      actualizarTodo();
+      mensajeBienvenida.style.display = 'block';
+    })();
+  </script>
+</body>
+</html>
